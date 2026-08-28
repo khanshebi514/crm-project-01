@@ -177,9 +177,10 @@ enum AuditAction {
 model User {
   id String @id @default(cuid())
 
-  email String  @unique
-  name  String?
-  phone String?
+  email        String  @unique
+  name         String?
+  phone        String?
+  passwordHash String?
 
   isActive Boolean @default(true)
 
@@ -189,9 +190,36 @@ model User {
 
   platformAdmin PlatformAdmin?
   memberships   Membership[]
+  authSessions  AuthSession[]
 
   @@index([isActive])
   @@index([deletedAt])
+}
+
+model AuthSession {
+  id String @id @default(cuid())
+
+  userId         String
+  activeTenantId String?
+
+  tokenHash String @unique
+
+  expiresAt  DateTime
+  lastSeenAt DateTime  @default(now())
+  revokedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  activeTenant Tenant? @relation("ActiveTenantSessions", fields: [activeTenantId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([userId])
+  @@index([activeTenantId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+  @@index([userId, revokedAt])
 }
 
 // ============================================================
@@ -232,6 +260,10 @@ model Plan {
 
   isActive Boolean @default(true)
 
+  isDefault Boolean @default(false)
+
+  trialDays Int @default(14)
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
@@ -241,6 +273,7 @@ model Plan {
 
   @@index([isActive])
   @@index([deletedAt])
+  @@index([isDefault])
 }
 
 // ============================================================
@@ -434,6 +467,7 @@ model Tenant {
   businessSettings BusinessSettings?
 
   subscriptions Subscription[]
+  authSessions  AuthSession[]  @relation("ActiveTenantSessions")
 
   customers      Customer[]
   suppliers      Supplier[]
@@ -800,4 +834,3 @@ model StockMovement {
   @@index([tenantId, type])
   @@index([tenantId, occurredAt])
 }
-
