@@ -4,6 +4,8 @@ import { getSessionCookie } from "@/lib/auth/cookies";
 
 import { resolveSession } from "@/lib/auth/auth";
 
+import { isPlatformAdmin } from "@/lib/auth/route-access";
+
 export async function GET() {
   try {
     const token = await getSessionCookie();
@@ -16,8 +18,12 @@ export async function GET() {
 
     const session = await resolveSession(token);
 
+    const admin = await isPlatformAdmin(session.user.id);
+
     return NextResponse.json({
       authenticated: true,
+
+      isAdmin: admin,
 
       user: {
         id: session.user.id,
@@ -33,6 +39,8 @@ export async function GET() {
     return NextResponse.json(
       {
         authenticated: false,
+
+        message: "Session invalid.",
       },
       {
         status: 401,

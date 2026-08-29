@@ -510,6 +510,36 @@ model Membership {
   @@index([tenantId, role])
 }
 
+////////////////////Modal Permission////////////////////
+
+model Permission {
+  id String @id @default(cuid())
+
+  key String @unique
+
+  description String?
+
+  createdAt DateTime @default(now())
+
+  rolePermissions RolePermission[]
+}
+
+model RolePermission {
+  id String @id @default(cuid())
+
+  role MembershipRole
+
+  permissionId String
+
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([role, permissionId])
+  @@index([role])
+  @@index([permissionId])
+}
+
 // ============================================================
 // TENANT — BUSINESS SETTINGS
 // ============================================================
