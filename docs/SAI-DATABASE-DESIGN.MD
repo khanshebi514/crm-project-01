@@ -61,22 +61,22 @@ Expense
 Core Relationships
 
 User
- ├── PlatformAdmin
- └── Membership → Tenant
+├── PlatformAdmin
+└── Membership → Tenant
 
 Plan → Subscription → Tenant
 
 Plan → PlanFeature → Feature
 
 Tenant
- ├── Memberships
- ├── Customers
- ├── Suppliers
- ├── Products
- ├── Sales
- ├── Payments
- ├── Expenses
- └── BusinessSettings
+├── Memberships
+├── Customers
+├── Suppliers
+├── Products
+├── Sales
+├── Payments
+├── Expenses
+└── BusinessSettings
 
 Sale → SaleItem → Product
 Product → StockMovement
