@@ -188,9 +188,10 @@ model User {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  platformAdmin PlatformAdmin?
-  memberships   Membership[]
-  authSessions  AuthSession[]
+  platformAdmin  PlatformAdmin?
+  memberships    Membership[]
+  authSessions   AuthSession[]
+  syncOperations SyncOperation[]
 
   @@index([isActive])
   @@index([deletedAt])
@@ -478,6 +479,7 @@ model Tenant {
   payments       Payment[]
   expenses       Expense[]
   stockMovements StockMovement[]
+  syncOperations SyncOperation[]
 
   @@index([name])
   @@index([isActive])
@@ -863,4 +865,36 @@ model StockMovement {
   @@index([tenantId, productId])
   @@index([tenantId, type])
   @@index([tenantId, occurredAt])
+}
+
+////sync OPERATIONS////////////////////////////////
+
+model SyncOperation {
+  id String @id @default(cuid())
+
+  operationId String @unique
+
+  tenantId String
+
+  userId String
+
+  entity String
+
+  operation String
+
+  status String
+
+  response Json?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([operationId])
 }
