@@ -8,37 +8,33 @@ export async function POST() {
   let record;
 
   try {
-    const testId = Date.now();
+    console.log("================================================");
 
     console.log("SAI API SYNC TEST");
 
-    /*
- Create Tenant
-*/
+    console.log("================================================");
+
+    const testId = Date.now();
+
+    // Create Tenant
 
     tenant = await prisma.tenant.create({
       data: {
-        name: `Sync Test ${testId}`,
+        name: `API Sync Test ${testId}`,
       },
     });
 
-    /*
- Create User
-*/
+    // Create User
 
     user = await prisma.user.create({
       data: {
-        email: `sync-test-${testId}@test.com`,
+        email: `api-sync-${testId}@test.com`,
 
-        passwordHash: "test",
-
-        name: "Sync Test User",
+        passwordHash: "test-password",
       },
     });
 
-    /*
- Create Membership
-*/
+    // Create Membership
 
     await prisma.membership.create({
       data: {
@@ -53,10 +49,6 @@ export async function POST() {
     console.log("✓ Test environment created");
 
     const operationId = `api-sync-test-${testId}`;
-
-    /*
- Execute Sync
-*/
 
     const result = await processSyncOperation({
       operationId,
@@ -81,7 +73,7 @@ export async function POST() {
     });
 
     if (!record) {
-      throw new Error("Sync record missing");
+      throw new Error("Sync record not created");
     }
 
     if (record.status !== "SYNCED") {
