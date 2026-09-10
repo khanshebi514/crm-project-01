@@ -1,215 +1,76 @@
-import "dotenv/config";
-
-import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-
-const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL,
-});
-
-const prisma = new PrismaClient({
-  adapter,
-});
+import prisma from "../lib/db/prisma.js";
 
 async function main() {
-  console.log("================================================");
+  console.log("Creating SAI test products...");
 
-  console.log("SAI — PERMISSION SEED STARTED");
+  /*
+    Replace this with your actual tenant id
+  */
 
-  console.log("================================================");
+  const tenantId = "cmte9bwfb0001rgwb1ofr98gb";
 
-  const permissions = [
-    // Product
+  const products = [
     {
-      key: "product.create",
-      description: "Create products",
+      name: "Sugar 1kg",
+      sku: "SUGAR-1KG",
+      barcode: "1000001",
+      purchasePrice: 160,
+      salePrice: 180,
+      minimumStock: 10,
     },
 
     {
-      key: "product.view",
-      description: "View products",
+      name: "Cooking Oil 1L",
+      sku: "OIL-1L",
+      barcode: "1000002",
+      purchasePrice: 500,
+      salePrice: 550,
+      minimumStock: 5,
     },
 
     {
-      key: "product.update",
-      description: "Update products",
+      name: "Rice 5kg",
+      sku: "RICE-5KG",
+      barcode: "1000003",
+      purchasePrice: 820,
+      salePrice: 900,
+      minimumStock: 5,
     },
 
     {
-      key: "product.delete",
-      description: "Delete products",
-    },
-
-    // Sales
-
-    {
-      key: "sale.create",
-      description: "Create sales",
-    },
-
-    {
-      key: "sale.view",
-      description: "View sales",
-    },
-
-    {
-      key: "sale.update",
-      description: "Update sales",
-    },
-
-    {
-      key: "sale.refund",
-      description: "Refund sales",
-    },
-
-    // Customers
-
-    {
-      key: "customer.create",
-      description: "Create customers",
-    },
-
-    {
-      key: "customer.view",
-      description: "View customers",
-    },
-
-    {
-      key: "customer.update",
-      description: "Update customers",
-    },
-
-    {
-      key: "customer.delete",
-      description: "Delete customers",
-    },
-
-    // Inventory
-
-    {
-      key: "inventory.view",
-      description: "View inventory",
-    },
-
-    {
-      key: "inventory.adjust",
-      description: "Adjust inventory",
-    },
-
-    // Reports
-
-    {
-      key: "report.view",
-      description: "View reports",
-    },
-
-    // Users
-
-    {
-      key: "user.invite",
-      description: "Invite users",
-    },
-
-    {
-      key: "user.update",
-      description: "Update users",
-    },
-
-    {
-      key: "user.remove",
-      description: "Remove users",
+      name: "Milk Pack 1L",
+      sku: "MILK-1L",
+      barcode: "1000004",
+      purchasePrice: 220,
+      salePrice: 250,
+      minimumStock: 10,
     },
   ];
 
-  const createdPermissions = {};
+  for (const product of products) {
+    await prisma.product.create({
+      data: {
+        tenantId,
 
-  for (const permission of permissions) {
-    const record = await prisma.permission.upsert({
-      where: {
-        key: permission.key,
+        ...product,
+
+        trackStock: true,
+
+        isActive: true,
       },
-
-      update: {},
-
-      create: permission,
     });
-
-    createdPermissions[permission.key] = record.id;
   }
 
-  console.log("✓ Permissions created");
-
-  /*
-    Role mappings
-  */
-
-  const roles = {
-    OWNER: Object.keys(createdPermissions),
-
-    MANAGER: [
-      "product.create",
-      "product.view",
-      "product.update",
-
-      "sale.create",
-      "sale.view",
-      "sale.update",
-
-      "customer.create",
-      "customer.view",
-      "customer.update",
-
-      "inventory.view",
-      "inventory.adjust",
-
-      "report.view",
-    ],
-
-    CASHIER: ["sale.create", "sale.view", "customer.view"],
-
-    STAFF: ["product.view", "customer.view"],
-  };
-
-  for (const roleName of Object.keys(roles)) {
-    for (const permissionKey of roles[roleName]) {
-      await prisma.rolePermission.upsert({
-        where: {
-          role_permissionId: {
-            role: roleName,
-
-            permissionId: createdPermissions[permissionKey],
-          },
-        },
-
-        update: {},
-
-        create: {
-          role: roleName,
-
-          permissionId: createdPermissions[permissionKey],
-        },
-      });
-    }
-  }
-
-  console.log("✓ Role permissions mapped");
-
-  console.log("================================================");
-
-  console.log("✅ SAI PERMISSION SEED COMPLETED");
-
-  console.log("================================================");
+  console.log("SAI test products created successfully");
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-
-  .catch(async (error) => {
+  .catch((error) => {
     console.error(error);
 
-    await prisma.$disconnect();
-
     process.exit(1);
+  })
+
+  .finally(async () => {
+    await prisma.$disconnect();
   });

@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { apiClient } from "@/lib/api/api-client";
+import { createSale } from "@/lib/sales/sale-client";
 
 import CustomerSelector from "./CustomerSelector";
 import ProductSearch from "./ProductSearch";
@@ -11,48 +14,45 @@ import SaleSummary from "./SaleSummary";
 
 import Modal from "@/components/ui/Modal";
 
-const demoProducts = [
-  {
-    id: "1",
-    name: "Sugar 2kg",
-    salePrice: 350,
-  },
-  {
-    id: "2",
-    name: "Cooking Oil 2L",
-    salePrice: 600,
-  },
-  {
-    id: "3",
-    name: "Rice 5kg",
-    salePrice: 900,
-  },
-  {
-    id: "4",
-    name: "Milk Pack",
-    salePrice: 220,
-  },
-];
-
 export default function QuickSaleForm() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
+  const [products, setProducts] = useState([]);
+  const [taxRate, setTaxRate] = useState(0);
 
   const [cart, setCart] = useState([]);
 
   const [discount, setDiscount] = useState("");
 
   const [paymentType, setPaymentType] = useState("PAID");
+  const [paymentMethod, setPaymentMethod] = useState("CASH");
 
   const [receivedAmount, setReceivedAmount] = useState("");
 
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const filteredProducts = search
-    ? demoProducts.filter((product) =>
-        product.name.toLowerCase().includes(search.toLowerCase()),
-      )
-    : [];
+  useEffect(() => {
+    if (!search) {
+      setProducts([]);
 
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const result = await apiClient(`/api/products/search?q=${search}`);
+
+        setProducts(result.products || []);
+      } catch (error) {
+        console.error("Product search failed", error);
+
+        setProducts([]);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [search]);
   function addProduct(product) {
     const existing = cart.find((item) => item.id === product.id);
 
@@ -102,9 +102,53 @@ export default function QuickSaleForm() {
     0,
   );
 
-  const finalTotal = Math.max(subtotal - Number(discount || 0), 0);
+  const discountAmount = Number(discount || 0);
+
+  const discountedTotal = Math.max(subtotal - discountAmount, 0);
+
+  const taxAmount = (discountedTotal * Number(taxRate || 0)) / 100;
+
+  const finalTotal = discountedTotal + taxAmount;
 
   const remainingAmount = Math.max(finalTotal - Number(receivedAmount || 0), 0);
+
+  async function handleConfirmSale() {
+    try {
+      setSaving(true);
+
+      const sale = await createSale({
+        customerId: null,
+
+        items: cart.map((item) => ({
+          productId: item.id,
+
+          quantity: item.quantity,
+
+          unitPrice: Number(item.salePrice),
+        })),
+
+        discount: Number(discount || 0),
+
+        tax: Number(taxAmount || 0),
+
+        paidAmount: Number(
+          paymentType === "PAID" ? finalTotal : receivedAmount || 0,
+        ),
+
+        paymentMethod: paymentMethod,
+      });
+
+      setConfirmOpen(false);
+
+      router.push(`/dashboard/sales/${sale.id}/receipt`);
+
+      setConfirmOpen(false);
+    } catch (error) {
+      console.error("SALE FAILED", error);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -115,7 +159,7 @@ export default function QuickSaleForm() {
 
         <ProductResults
           search={search}
-          products={filteredProducts}
+          products={products}
           onAdd={addProduct}
         />
       </div>
@@ -169,6 +213,7 @@ export default function QuickSaleForm() {
       <SaleSummary
         subtotal={subtotal}
         discount={discount}
+        tax={taxAmount}
         total={finalTotal}
         paymentType={paymentType}
         receivedAmount={receivedAmount}
@@ -202,16 +247,18 @@ export default function QuickSaleForm() {
 
             <button
               type="button"
+              onClick={handleConfirmSale}
+              disabled={saving}
               className="
-              rounded-md
-              bg-primary
-              px-4
-              py-2
-              text-sm
-              text-primary-foreground
-            "
+ rounded-md
+ bg-primary
+ px-4
+ py-2
+ text-sm
+ text-primary-foreground
+ "
             >
-              Confirm Sale
+              {saving ? "Creating..." : "Confirm Sale"}
             </button>
           </>
         }
@@ -224,6 +271,7 @@ export default function QuickSaleForm() {
           <SummaryRow label="Discount" value={`Rs ${discount || 0}`} />
 
           <SummaryRow label="Final Total" value={`Rs ${finalTotal}`} bold />
+          <SummaryRow label="Tax" value={`Rs ${taxAmount}`} />
 
           <SummaryRow label="Payment" value={paymentType} />
 

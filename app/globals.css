@@ -411,3 +411,15 @@ textarea::placeholder {
     transition-duration: 0.01ms !important;
   }
 }
+
+@media print {
+  body {
+    background: white;
+  }
+
+  .receipt-container {
+    border: none;
+    box-shadow: none;
+    max-width: 100%;
+  }
+}

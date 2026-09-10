@@ -8,8 +8,6 @@ export default function DashboardPage() {
     <div>
       {/* Page Header */}
       <section className="sai-page-header">
-        <h2 className="sai-page-title">Business Dashboard</h2>
-
         <p className="sai-page-description">
           Manage your daily business activities quickly and easily.
         </p>

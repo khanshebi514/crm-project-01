@@ -27,5 +27,8 @@
     "prisma": "^7.10.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.12"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   }
 }

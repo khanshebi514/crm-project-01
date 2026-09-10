@@ -1,4 +1,5 @@
 import { createSale } from "@/lib/sales/create-sale";
+import { validateSaleInput } from "@/lib/sales/sale-validation";
 
 export async function POST(request) {
   try {
@@ -10,13 +11,20 @@ export async function POST(request) {
       customerId,
       items,
       discount,
+      tax,
       paidAmount,
       paymentMethod,
     } = body;
 
-    if (!items || !items.length) {
-      throw new Error("Sale items are required");
-    }
+    validateSaleInput({
+      items,
+
+      discount,
+
+      tax,
+
+      paidAmount,
+    });
 
     const sale = await createSale({
       tenantId,
@@ -28,6 +36,8 @@ export async function POST(request) {
       items,
 
       discount,
+
+      tax,
 
       paidAmount,
 
