@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+
 import { apiClient } from "@/lib/api/api-client";
 import { createSale } from "@/lib/sales/sale-client";
+import { calculateSaleTotals } from "@/lib/sales/sale-calculator";
 
 import CustomerSelector from "./CustomerSelector";
 import ProductSearch from "./ProductSearch";
@@ -16,21 +18,32 @@ import Modal from "@/components/ui/Modal";
 
 export default function QuickSaleForm() {
   const router = useRouter();
+
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+
   const [search, setSearch] = useState("");
+
   const [products, setProducts] = useState([]);
-  const [taxRate, setTaxRate] = useState(0);
 
   const [cart, setCart] = useState([]);
 
   const [discount, setDiscount] = useState("");
 
+  const [taxRate, setTaxRate] = useState(0);
+
   const [paymentType, setPaymentType] = useState("PAID");
+
   const [paymentMethod, setPaymentMethod] = useState("CASH");
 
   const [receivedAmount, setReceivedAmount] = useState("");
 
   const [confirmOpen, setConfirmOpen] = useState(false);
+
   const [saving, setSaving] = useState(false);
+
+  /*
+    PRODUCT SEARCH
+  */
 
   useEffect(() => {
     if (!search) {
@@ -53,6 +66,11 @@ export default function QuickSaleForm() {
 
     return () => clearTimeout(timer);
   }, [search]);
+
+  /*
+    CART FUNCTIONS
+  */
+
   function addProduct(product) {
     const existing = cart.find((item) => item.id === product.id);
 
@@ -62,6 +80,7 @@ export default function QuickSaleForm() {
           item.id === product.id
             ? {
                 ...item,
+
                 quantity: item.quantity + 1,
               }
             : item,
@@ -70,8 +89,10 @@ export default function QuickSaleForm() {
     } else {
       setCart([
         ...cart,
+
         {
           ...product,
+
           quantity: 1,
         },
       ]);
@@ -97,27 +118,38 @@ export default function QuickSaleForm() {
     setCart(cart.filter((item) => item.id !== id));
   }
 
-  const subtotal = cart.reduce(
-    (sum, item) => sum + item.salePrice * item.quantity,
-    0,
-  );
+  /*
+      SALE CALCULATION
+  */
 
-  const discountAmount = Number(discount || 0);
+  const totals = calculateSaleTotals({
+    cart,
 
-  const discountedTotal = Math.max(subtotal - discountAmount, 0);
+    discount,
 
-  const taxAmount = (discountedTotal * Number(taxRate || 0)) / 100;
+    taxRate,
 
-  const finalTotal = discountedTotal + taxAmount;
+    receivedAmount,
+  });
 
-  const remainingAmount = Math.max(finalTotal - Number(receivedAmount || 0), 0);
+  const {
+    subtotal,
+
+    discountAmount,
+
+    taxAmount,
+
+    total,
+
+    remaining,
+  } = totals;
 
   async function handleConfirmSale() {
     try {
       setSaving(true);
 
       const sale = await createSale({
-        customerId: null,
+        customerId: selectedCustomer?.id ?? null,
 
         items: cart.map((item) => ({
           productId: item.id,
@@ -127,22 +159,20 @@ export default function QuickSaleForm() {
           unitPrice: Number(item.salePrice),
         })),
 
-        discount: Number(discount || 0),
+        discount: discountAmount,
 
-        tax: Number(taxAmount || 0),
+        tax: taxAmount,
 
         paidAmount: Number(
-          paymentType === "PAID" ? finalTotal : receivedAmount || 0,
+          paymentType === "PAID" ? total : receivedAmount || 0,
         ),
 
-        paymentMethod: paymentMethod,
+        paymentMethod,
       });
 
       setConfirmOpen(false);
 
       router.push(`/dashboard/sales/${sale.id}/receipt`);
-
-      setConfirmOpen(false);
     } catch (error) {
       console.error("SALE FAILED", error);
     } finally {
@@ -152,7 +182,10 @@ export default function QuickSaleForm() {
 
   return (
     <div className="space-y-5">
-      <CustomerSelector />
+      <CustomerSelector
+        value={selectedCustomer}
+        onChange={setSelectedCustomer}
+      />
 
       <div>
         <ProductSearch search={search} onSearch={setSearch} />
@@ -170,18 +203,8 @@ export default function QuickSaleForm() {
         onRemove={removeProduct}
       />
 
-      {/* Discount */}
-
       <div>
-        <label
-          className="
-            text-sm
-            font-medium
-            text-text-secondary
-          "
-        >
-          Discount
-        </label>
+        <label className="text-sm font-medium">Discount</label>
 
         <input
           type="number"
@@ -189,40 +212,35 @@ export default function QuickSaleForm() {
           onChange={(e) => setDiscount(e.target.value)}
           placeholder="Enter discount amount"
           className="
-            mt-2
-            w-full
-            rounded-md
-            border
-            border-input-border
-            px-3
-            py-2
-            text-sm
-          "
+mt-2
+w-full
+rounded-md
+border
+px-3
+py-2
+"
         />
       </div>
 
       <PaymentSelector
         value={paymentType}
         onChange={setPaymentType}
-        total={finalTotal}
+        total={total}
         receivedAmount={receivedAmount}
         setReceivedAmount={setReceivedAmount}
-        remainingAmount={remainingAmount}
+        remainingAmount={remaining}
       />
 
       <SaleSummary
         subtotal={subtotal}
-        discount={discount}
+        discount={discountAmount}
         tax={taxAmount}
-        total={finalTotal}
+        total={total}
         paymentType={paymentType}
         receivedAmount={receivedAmount}
-        remainingAmount={remainingAmount}
-        onComplete={() => {
-          setConfirmOpen(true);
-        }}
+        remainingAmount={remaining}
+        onComplete={() => setConfirmOpen(true)}
       />
-
       <Modal
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
@@ -234,13 +252,13 @@ export default function QuickSaleForm() {
               type="button"
               onClick={() => setConfirmOpen(false)}
               className="
-              rounded-md
-              border
-              border-border
-              px-4
-              py-2
-              text-sm
-            "
+        rounded-md
+        border
+        border-border
+        px-4
+        py-2
+        text-sm
+        "
             >
               Cancel
             </button>
@@ -250,45 +268,109 @@ export default function QuickSaleForm() {
               onClick={handleConfirmSale}
               disabled={saving}
               className="
- rounded-md
- bg-primary
- px-4
- py-2
- text-sm
- text-primary-foreground
- "
+        rounded-md
+        bg-primary
+        px-4
+        py-2
+        text-sm
+        text-primary-foreground
+        "
             >
               {saving ? "Creating..." : "Confirm Sale"}
             </button>
           </>
         }
       >
-        <div className="space-y-4">
-          <SummaryRow label="Items" value={`${cart.length} items`} />
+        <div className="space-y-5">
+          {/* Customer Information */}
 
-          <SummaryRow label="Subtotal" value={`Rs ${subtotal}`} />
+          <div
+            className="
+      rounded-lg
+      bg-surface-muted
+      p-4
+      space-y-2
+      "
+          >
+            <h3 className="font-semibold">Customer</h3>
 
-          <SummaryRow label="Discount" value={`Rs ${discount || 0}`} />
+            <SummaryRow
+              label="Name"
+              value={selectedCustomer?.name || "Walk-in Customer"}
+            />
 
-          <SummaryRow label="Final Total" value={`Rs ${finalTotal}`} bold />
-          <SummaryRow label="Tax" value={`Rs ${taxAmount}`} />
+            {selectedCustomer?.phone && (
+              <SummaryRow label="Phone" value={selectedCustomer.phone} />
+            )}
 
-          <SummaryRow label="Payment" value={paymentType} />
-
-          {paymentType === "PARTIAL" && (
-            <>
+            {selectedCustomer?.openingBalance && (
               <SummaryRow
-                label="Received"
-                value={`Rs ${receivedAmount || 0}`}
+                label="Previous Khata"
+                value={`Rs ${selectedCustomer.openingBalance}`}
               />
+            )}
+          </div>
 
-              <SummaryRow
-                label="Remaining Khata"
-                value={`Rs ${remainingAmount}`}
-                bold
-              />
-            </>
-          )}
+          {/* Sale Information */}
+
+          <div
+            className="
+      rounded-lg
+      border
+      border-border
+      p-4
+      space-y-2
+      "
+          >
+            <h3 className="font-semibold">Sale Summary</h3>
+
+            <SummaryRow label="Items" value={`${cart.length} items`} />
+
+            <SummaryRow label="Subtotal" value={`Rs ${subtotal}`} />
+
+            <SummaryRow label="Discount" value={`Rs ${discountAmount}`} />
+
+            <SummaryRow label="Tax" value={`Rs ${taxAmount}`} />
+
+            <SummaryRow label="Final Total" value={`Rs ${total}`} bold />
+          </div>
+
+          {/* Payment Information */}
+
+          <div
+            className="
+      rounded-lg
+      border
+      border-border
+      p-4
+      space-y-2
+      "
+          >
+            <h3 className="font-semibold">Payment</h3>
+
+            <SummaryRow label="Payment Type" value={paymentType} />
+
+            <SummaryRow label="Payment Method" value={paymentMethod} />
+
+            {paymentType === "PARTIAL" && (
+              <>
+                <SummaryRow
+                  label="Received"
+                  value={`Rs ${receivedAmount || 0}`}
+                />
+
+                <SummaryRow
+                  label="Remaining Khata"
+                  value={`Rs ${remaining}`}
+                  bold
+                />
+              </>
+            )}
+
+            {paymentType === "PAID" && selectedCustomer && (
+              <SummaryRow label="Customer Balance" value="No new due" />
+            )}
+          </div>
         </div>
       </Modal>
     </div>
@@ -297,21 +379,10 @@ export default function QuickSaleForm() {
 
 function SummaryRow({ label, value, bold = false }) {
   return (
-    <div
-      className="
-flex
-justify-between
-"
-    >
+    <div className="flex justify-between">
       <span className="text-sm text-text-secondary">{label}</span>
 
-      <span
-        className={
-          bold ? "font-bold text-text-primary" : "font-medium text-text-primary"
-        }
-      >
-        {value}
-      </span>
+      <span className={bold ? "font-bold" : "font-medium"}>{value}</span>
     </div>
   );
 }
