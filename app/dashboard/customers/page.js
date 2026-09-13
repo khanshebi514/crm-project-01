@@ -1,4 +1,5 @@
 "use client";
+import CustomerExportButton from "@/components/customers/CustomerExportButton";
 
 import { useEffect, useState } from "react";
 
@@ -40,7 +41,11 @@ export default function CustomersPage() {
   return (
     <div className="space-y-6">
       <section className="sai-page-header">
-        <h2 className="sai-page-title">Customers</h2>
+        <div className="flex justify-between">
+          <h1 className="text-2xl font-bold">Customers</h1>
+
+          <CustomerExportButton />
+        </div>
 
         <p className="sai-page-description">
           Manage customers and khata records.

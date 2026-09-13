@@ -8,9 +8,11 @@ import { authorize } from "@/lib/security/authorize";
 
 import { PERMISSIONS } from "@/lib/security/permissions";
 
-import { getProducts } from "@/lib/products/product-query";
+import { createCustomerPayment } from "@/lib/payments/payment-service";
 
-export async function GET() {
+import { validatePaymentInput } from "@/lib/payments/payment-validation";
+
+export async function POST(request, { params }) {
   try {
     const token = await getSessionCookie();
 
@@ -21,19 +23,37 @@ export async function GET() {
 
       activeTenantId: session.activeTenantId,
 
-      permission: PERMISSIONS.PRODUCT_VIEW,
+      permission: PERMISSIONS.PAYMENT_CREATE,
     });
 
-    const products = await getProducts({
+    const { id } = await params;
+
+    const body = await request.json();
+
+    validatePaymentInput({
+      amount: body.amount,
+    });
+
+    const payment = await createCustomerPayment({
       tenantId: context.tenantId,
+
+      customerId: id,
+
+      amount: body.amount,
+
+      method: body.method || "CASH",
+
+      notes: body.notes,
     });
 
     return NextResponse.json({
       success: true,
 
-      products,
+      payment,
     });
   } catch (error) {
+    console.error("CREATE CUSTOMER PAYMENT ERROR", error);
+
     return NextResponse.json(
       {
         success: false,

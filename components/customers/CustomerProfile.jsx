@@ -1,17 +1,21 @@
 import CustomerBalance from "./CustomerBalance";
 import CustomerSales from "./CustomerSales";
+import CustomerLedger from "./ledger/CustomerLedger";
 
-export default function CustomerProfile({ customer }) {
+import CustomerPaymentButton from "./payments/CustomerPaymentButton";
+import CustomerPaymentHistory from "./payments/CustomerPaymentHistory";
+
+export default function CustomerProfile({ customer, ledger }) {
   return (
     <div className="space-y-6">
       <section
         className="
-rounded-xl
-border
-border-border
-bg-surface
-p-6
-"
+        rounded-xl
+        border
+        border-border
+        bg-surface
+        p-6
+        "
       >
         <h1 className="text-2xl font-bold">{customer.name}</h1>
 
@@ -26,7 +30,13 @@ p-6
 
       <CustomerBalance customer={customer} />
 
+      <CustomerPaymentButton customerId={customer.id} />
+
       <CustomerSales sales={customer.sales} />
+
+      <CustomerPaymentHistory payments={customer.payments} />
+      <CustomerLedger ledger={ledger} />
     </div>
   );
 }
+ 
