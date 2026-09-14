@@ -6,7 +6,7 @@ export default async function CustomerPage({ params }) {
   const { id } = await params;
 
   const data = await getCustomerLedgerServer(id);
-  console.log("Customer data:", data);
+  //console.log("Customer data:", data);
 
   return (
     <div className="p-6">

@@ -671,6 +671,7 @@ model Unit {
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   productUnits ProductUnit[]
+  products     Product[]
 
   @@unique([tenantId, name])
   @@index([tenantId])
@@ -686,6 +687,7 @@ model Product {
 
   tenantId   String
   categoryId String?
+  baseUnitId String?
 
   name    String
   sku     String?
@@ -705,6 +707,8 @@ model Product {
 
   tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  baseUnit Unit? @relation(fields: [baseUnitId], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
   saleItems      SaleItem[]
   stockMovements StockMovement[]

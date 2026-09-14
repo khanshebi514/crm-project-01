@@ -8,9 +8,9 @@ import { authorize } from "@/lib/security/authorize";
 
 import { PERMISSIONS } from "@/lib/security/permissions";
 
-import { getProducts } from "@/lib/products/product-query";
+import { createProduct } from "@/lib/products/product-service";
 
-export async function GET() {
+export async function POST(request) {
   try {
     const token = await getSessionCookie();
 
@@ -21,26 +21,47 @@ export async function GET() {
 
       activeTenantId: session.activeTenantId,
 
-      permission: PERMISSIONS.PRODUCT_VIEW,
+      permission: PERMISSIONS.PRODUCT_CREATE,
     });
 
-    const products = await getProducts({
+    const body = await request.json();
+
+    const product = await createProduct({
       tenantId: context.tenantId,
+
+      categoryId: body.categoryId || null,
+
+      baseUnitId: body.baseUnitId || null,
+
+      name: body.name,
+
+      sku: body.sku || null,
+      buyPrice: body.buyPrice || null,
+      salePrice: body.salePrice || null,
+
+      barcode: body.barcode || null,
+
+      minimumStock: body.minimumStock,
+
+      trackStock: body.trackStock,
+
+      productUnits: body.productUnits || [],
     });
 
     return NextResponse.json({
       success: true,
 
-      products,
+      product,
     });
   } catch (error) {
+    console.error("CREATE PRODUCT ERROR", error);
+
     return NextResponse.json(
       {
         success: false,
 
         message: error.message,
       },
-
       {
         status: 400,
       },

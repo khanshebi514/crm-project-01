@@ -5,12 +5,18 @@ import { useRouter } from "next/navigation";
 
 import { useToast } from "@/context/ToastProvider";
 
+import CategorySelect from "./CategorySelect";
+import UnitSelect from "./UnitSelect";
+import ProductUnitManager from "./ProductUnitManager";
+
 export default function ProductForm() {
   const router = useRouter();
 
   const toast = useToast();
 
   const [saving, setSaving] = useState(false);
+
+  const [productUnits, setProductUnits] = useState([]);
 
   const [form, setForm] = useState({
     name: "",
@@ -19,13 +25,13 @@ export default function ProductForm() {
 
     barcode: "",
 
-    purchasePrice: "",
+    categoryId: "",
 
-    salePrice: "",
+    baseUnitId: "",
 
     minimumStock: "",
-
-    categoryId: "",
+    buyPrice: "",
+    salePrice: "",
 
     trackStock: true,
   });
@@ -51,7 +57,11 @@ export default function ProductForm() {
           "Content-Type": "application/json",
         },
 
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+
+          productUnits,
+        }),
       });
 
       const data = await response.json();
@@ -66,12 +76,15 @@ export default function ProductForm() {
         name: "",
         sku: "",
         barcode: "",
-        purchasePrice: "",
+        categoryId: "",
+        baseUnitId: "",
+        buyPrice: "",
         salePrice: "",
         minimumStock: "",
-        categoryId: "",
         trackStock: true,
       });
+
+      setProductUnits([]);
 
       router.refresh();
     } catch (error) {
@@ -85,13 +98,13 @@ export default function ProductForm() {
     <form
       onSubmit={handleSubmit}
       className="
-      rounded-xl
-      border
-      border-border
-      bg-surface
-      p-6
-      space-y-4
-      "
+rounded-xl
+border
+border-border
+bg-surface
+p-6
+space-y-5
+"
     >
       <h2 className="font-semibold">Add Product</h2>
 
@@ -100,12 +113,17 @@ export default function ProductForm() {
         value={form.name}
         onChange={(e) => updateField("name", e.target.value)}
         className="
-        w-full
-        rounded-md
-        border
-        px-3
-        py-2
-        "
+w-full
+rounded-md
+border
+px-3
+py-2
+"
+      />
+
+      <CategorySelect
+        value={form.categoryId}
+        onChange={(value) => updateField("categoryId", value)}
       />
 
       <input
@@ -113,12 +131,12 @@ export default function ProductForm() {
         value={form.sku}
         onChange={(e) => updateField("sku", e.target.value)}
         className="
-        w-full
-        rounded-md
-        border
-        px-3
-        py-2
-        "
+w-full
+rounded-md
+border
+px-3
+py-2
+"
       />
 
       <input
@@ -126,26 +144,37 @@ export default function ProductForm() {
         value={form.barcode}
         onChange={(e) => updateField("barcode", e.target.value)}
         className="
-        w-full
-        rounded-md
-        border
-        px-3
-        py-2
-        "
+w-full
+rounded-md
+border
+px-3
+py-2
+"
       />
 
-      <div className="grid md:grid-cols-2 gap-4">
+      <div>
+        <label className="text-sm font-medium">Base Unit</label>
+
+        <UnitSelect
+          value={form.baseUnitId}
+          onChange={(value) => updateField("baseUnitId", value)}
+        />
+      </div>
+
+      <ProductUnitManager units={productUnits} setUnits={setProductUnits} />
+      <div className="flex flex-col md:flex-row gap-4">
         <input
           type="number"
-          placeholder="Purchase Price"
-          value={form.purchasePrice}
-          onChange={(e) => updateField("purchasePrice", e.target.value)}
+          placeholder="Buy Price"
+          value={form.buyPrice}
+          onChange={(e) => updateField("buyPrice", e.target.value)}
           className="
-          rounded-md
-          border
-          px-3
-          py-2
-          "
+w-auto
+rounded-md
+border
+px-3
+py-2
+"
         />
 
         <input
@@ -154,11 +183,12 @@ export default function ProductForm() {
           value={form.salePrice}
           onChange={(e) => updateField("salePrice", e.target.value)}
           className="
-          rounded-md
-          border
-          px-3
-          py-2
-          "
+w-auto
+rounded-md
+border
+px-3
+py-2
+"
         />
       </div>
 
@@ -168,12 +198,12 @@ export default function ProductForm() {
         value={form.minimumStock}
         onChange={(e) => updateField("minimumStock", e.target.value)}
         className="
-        w-full
-        rounded-md
-        border
-        px-3
-        py-2
-        "
+w-full
+rounded-md
+border
+px-3
+py-2
+"
       />
 
       <label className="flex gap-2 items-center">
@@ -188,13 +218,13 @@ export default function ProductForm() {
       <button
         disabled={saving}
         className="
-        rounded-md
-        bg-primary
-        px-4
-        py-2
-        text-sm
-        text-primary-foreground
-        "
+rounded-md
+bg-primary
+px-4
+py-2
+text-sm
+text-primary-foreground
+"
       >
         {saving ? "Saving..." : "Add Product"}
       </button>

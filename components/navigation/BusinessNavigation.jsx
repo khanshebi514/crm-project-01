@@ -27,6 +27,16 @@ export default function BusinessNavigation() {
     },
 
     {
+      label: "Categories",
+      href: "/dashboard/categories",
+    },
+
+    {
+      label: "Units",
+      href: "/dashboard/units",
+    },
+
+    {
       label: "Inventory",
       href: "/dashboard/inventory",
     },

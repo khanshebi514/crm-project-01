@@ -84,9 +84,9 @@ export async function PATCH(request, { params }) {
 
       barcode: body.barcode,
 
-      purchasePrice: body.purchasePrice,
+      buyPrice: body.buyPrice || null,
 
-      salePrice: body.salePrice,
+      salePrice: body.salePrice || null,
 
       minimumStock: body.minimumStock,
 
@@ -94,6 +94,7 @@ export async function PATCH(request, { params }) {
 
       isActive: body.isActive,
     });
+    console.log("Updated product:", product);
 
     return NextResponse.json({
       success: true,
