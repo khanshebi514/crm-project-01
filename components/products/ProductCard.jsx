@@ -2,6 +2,7 @@ import ProductEditModal from "./ProductEditModal";
 import ProductDeleteButton from "./ProductDeleteButton";
 
 export default function ProductCard({ product }) {
+  console.log("PRODUCT CARD DATA from productCard", product);
   return (
     <div
       className="

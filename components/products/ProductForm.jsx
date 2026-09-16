@@ -78,7 +78,7 @@ export default function ProductForm() {
         barcode: "",
         categoryId: "",
         baseUnitId: "",
-        buyPrice: "",
+        purchasePrice: "",
         salePrice: "",
         minimumStock: "",
         trackStock: true,
@@ -165,9 +165,9 @@ py-2
       <div className="flex flex-col md:flex-row gap-4">
         <input
           type="number"
-          placeholder="Buy Price"
-          value={form.buyPrice}
-          onChange={(e) => updateField("buyPrice", e.target.value)}
+          placeholder="Purchase Price"
+          value={form.purchasePrice}
+          onChange={(e) => updateField("purchasePrice", e.target.value)}
           className="
 w-auto
 rounded-md

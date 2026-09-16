@@ -1,24 +1,29 @@
-"use client";
+import Navbar from "@/components/landing/Navbar";
 
-import { useState } from "react";
-import Modal from "@/components/ui/Modal";
-import Button from "@/components/ui/Button";
+import Hero from "@/components/landing/Hero";
+
+import Features from "@/components/landing/Features";
+
+import BusinessTypes from "@/components/landing/BusinessTypes";
+
+import WhySAI from "@/components/landing/WhySAI";
+
+import PricingPreview from "@/components/landing/PricingPreview";
 
 export default function Home() {
-  const [open, setOpen] = useState(false);
-
   return (
     <>
-      <Button onClick={() => setOpen(true)}>Open Modal</Button>
+      <Navbar />
 
-      <Modal
-        open={open}
-        onClose={() => setOpen(false)}
-        title="Customer Details"
-        description="Review the customer information."
-      >
-        Customer content goes here.
-      </Modal>
+      <Hero />
+
+      <Features />
+
+      <BusinessTypes />
+
+      <WhySAI />
+
+      <PricingPreview />
     </>
   );
 }

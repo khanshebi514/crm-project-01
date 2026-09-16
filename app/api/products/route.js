@@ -36,7 +36,7 @@ export async function POST(request) {
       name: body.name,
 
       sku: body.sku || null,
-      buyPrice: body.buyPrice || null,
+      purchasePrice: body.purchasePrice || null,
       salePrice: body.salePrice || null,
 
       barcode: body.barcode || null,

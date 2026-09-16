@@ -78,13 +78,15 @@ export async function PATCH(request, { params }) {
 
       categoryId: body.categoryId,
 
+      baseUnitId: body.baseUnitId,
+
       name: body.name,
 
       sku: body.sku,
 
       barcode: body.barcode,
 
-      buyPrice: body.buyPrice || null,
+      purchasePrice: body.purchasePrice || null,
 
       salePrice: body.salePrice || null,
 
@@ -92,9 +94,14 @@ export async function PATCH(request, { params }) {
 
       trackStock: body.trackStock,
 
+      productUnits: body.productUnits || [],
+
       isActive: body.isActive,
     });
-    console.log("Updated product:", product);
+
+    console.log("API RECEIVED BODY", body);
+
+    console.log("API RECEIVED PRODUCT UNITS", body.productUnits);
 
     return NextResponse.json({
       success: true,

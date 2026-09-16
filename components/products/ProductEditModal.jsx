@@ -64,8 +64,10 @@ export default function ProductEditModal({ product }) {
   async function handleUpdate() {
     try {
       setSaving(true);
-
-      console.log("EDIT PRODUCT DATA", product);
+      console.log("PATCH PAYLOAD", {
+        ...form,
+        productUnits,
+      });
 
       const response = await fetch(`/api/products/${product.id}`, {
         method: "PATCH",
@@ -102,14 +104,26 @@ export default function ProductEditModal({ product }) {
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setProductUnits(
+            product.productUnits?.map((item) => ({
+              unitId: item.unitId,
+
+              conversion: String(item.conversion),
+
+              sellingPrice: String(item.sellingPrice),
+            })) || [],
+          );
+
+          setOpen(true);
+        }}
         className="
-      rounded-md
-      border
-      px-3
-      py-1
-      text-sm
-      "
+rounded-md
+border
+px-3
+py-1
+text-sm
+"
       >
         Edit
       </button>
